@@ -237,7 +237,7 @@ curl -X POST http://localhost:8000/api/qa/ask \
 
 ## 阶段三：接入 LLM
 
-> **适用时机**：成员C完成 `llm_generator.py` 后。
+> **适用时机**：完成 `llm_generator.py` 后。
 
 **第一步**：申请 API Key（推荐通义千问，有免费额度）
 - 通义千问：https://dashscope.aliyun.com
