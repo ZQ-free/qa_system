@@ -42,6 +42,9 @@ class Intent:
     # 文物尺寸与规格：该文物的尺寸和重量是多少？
     ARTIFACT_DIMENSIONS = "artifact_dimensions"
 
+     # 相关文物推荐：与该文物风格或主题相似的文物有哪些？
+    ARTIFACT_RECOMMEND = "artifact_recommend"
+
     # ── 兜底 ───────────────────────────────────────────────────
 
     # 无法识别的问题，返回"暂无相关数据"
@@ -61,4 +64,5 @@ class Intent:
             cls.AUTHOR_OTHER_WORKS,
             cls.DYNASTY_ARTIFACTS,
             cls.ARTIFACT_DIMENSIONS,
+            cls.ARTIFACT_RECOMMEND,
         ]
