@@ -6,7 +6,8 @@ main.py — 应用入口
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles      # ← 加这行
+from fastapi.responses import FileResponse        # ← 加这行
 from app.api.qa_router import router as qa_router
 from config import settings
 
