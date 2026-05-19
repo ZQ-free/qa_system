@@ -78,12 +78,21 @@ FACT_TEMPLATES = {
         f"的尺寸规格：{r.get('dimensions', '暂无尺寸数据')}，"
         f"现藏于{r.get('museum_name', '未知博物馆')}。"
     ),
+  Intent.RELATED_ARTIFACTS: lambda r: (
+    f"《{r.get('title', r.get('artifact_name', '未知'))}》"
+    f"（{r.get('type', r.get('artifact_type', ''))}，"
+    f"{r.get('dynasty_name', '')}），"
+    f"藏于{r.get('museum_name', '未知博物馆')}。"
+    + (f"\n  相似原因：{r.get('similarity_reason', '')}" 
+       if r.get('similarity_reason') else "")
+),
 }
 
 # 列表类意图（返回多条记录，需要汇总展示）
 LIST_INTENTS = {
     Intent.AUTHOR_OTHER_WORKS,
     Intent.DYNASTY_ARTIFACTS,
+  Intent.RELATED_ARTIFACTS,   # 补充
 }
 
 
