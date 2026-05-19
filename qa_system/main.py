@@ -26,7 +26,11 @@ app.add_middleware(
 
 # 注册问答路由，所有接口都挂在 /api/qa 前缀下
 app.include_router(qa_router, prefix="/api/qa")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+@app.get("/")
+async def index():
+    return FileResponse("app/static/index.html")
 
 @app.get("/health")
 def health_check():
