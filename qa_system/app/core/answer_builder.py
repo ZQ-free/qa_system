@@ -81,10 +81,11 @@ FACT_TEMPLATES = {
   Intent.RELATED_ARTIFACTS: lambda r: (
     f"《{r.get('title', r.get('artifact_name', '未知'))}》"
     f"（{r.get('type', r.get('artifact_type', ''))}，"
-    f"{r.get('dynasty_name', '')}），"
-    f"藏于{r.get('museum_name', '未知博物馆')}。"
-    + (f"\n  相似原因：{r.get('similarity_reason', '')}" 
-       if r.get('similarity_reason') else "")
+    f"{r.get('dynasty', r.get('dynasty_name', ''))}），"
+    f"材质：{r.get('material', '未知')}，"
+    f"藏于{r.get('museum_name', r.get('museum', '未知博物馆'))}。"
+    + (f"\n  推荐依据：{r.get('match_reason', '')}"
+       if r.get('match_reason') else "")
 ),
 }
 
@@ -100,8 +101,6 @@ class AnswerBuilder:
     """
     答案组装器。
     将图谱查询结果 + LLM润色 组装为标准的 AskResponse。
-    
-    【组长负责实现】
     """
 
     def __init__(self, llm_generator=None):
