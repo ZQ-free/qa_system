@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>海外文物知识问答</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── 变量 ─────────────────────────────────────── */
+:root {
+  --bg:        #0d0d11;
+  --panel:     #13131a;
+  --card:      #1a1a24;
+  --border:    #252535;
+  --accent:    #4f8ef7;
+  --gold:      #c9a84c;
+  --gold2:     #f0d070;
+  --text:      #e4e4f0;
+  --sub:       #7a7a9a;
+  --user-bg:   #162040;
+  --user-bd:   #2a4090;
+  --asst-bg:   #1a1a24;
+  --asst-bd:   #252535;
+  --green:     #3dd68c;
+  --red:       #e05a5a;
+  --r:         13px;
+}
+
+/* ── 重置 ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Serif SC', 'SimSun', Georgia, serif;
+  display: flex;
+  height: 100vh;
+}
+
+/* ── 布局 ─────────────────────────────────────── */
+.layout { display: flex; width: 100%; height: 100%; }
+
+/* ── 左侧栏 ───────────────────────────────────── */
+.sidebar {
+  width: 210px;
+  min-width: 210px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px;
+  gap: 22px;
+  overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.logo-row { display: flex; align-items: center; gap: 11px; }
+
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 19px; font-weight: 700; color: #0d0d11;
+}
+
+.logo-title { font-size: 12px; font-weight: 600; line-height: 1.45; color: var(--text); }
+
+.sec-label {
+  font-size: 10px; color: var(--sub);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+
+/* 快捷按钮 */
+.quick-list { display: flex; flex-direction: column; gap: 5px; }
+
+.quick-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: #b0b0cc;
+  font-size: 12px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all .18s;
+  font-family: inherit;
+  line-height: 1.35;
+}
+.quick-btn:hover { background: #1f1f2e; border-color: var(--accent); color: var(--text); }
+
+/* 侧栏底部标签 */
+.sidebar-footer { margin-top: auto; display: flex; gap: 5px; flex-wrap: wrap; }
+.badge {
+  font-size: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--sub); padding: 3px 7px;
+}
+
+/* ── 主区域 ───────────────────────────────────── */
+.chat-main {
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* 顶栏 */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 8px; }
+
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 7px #3dd68c99;
+}
+
+.topbar-title { font-size: 14px; font-weight: 600; }
+
+.clear-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px; color: var(--sub);
+  font-size: 12px; padding: 5px 11px;
+  cursor: pointer; transition: all .18s;
+  font-family: inherit;
+}
+.clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* 消息列表 */
+.msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex; flex-direction: column; gap: 18px;
+  scroll-behavior: smooth;
+}
+.msgs::-webkit-scrollbar { width: 4px; }
+.msgs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* 欢迎屏 */
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center;
+  gap: 14px; padding: 60px 20px;
+  flex: 1;
+}
+
+.welcome-icon {
+  width: 68px; height: 68px;
+  background: linear-gradient(135deg, #1a2744, #1f1f2e);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); font-size: 28px;
+}
+
+.welcome h2 { font-size: 20px; font-weight: 600; color: var(--text); }
+.welcome p  { font-size: 14px; color: var(--sub); max-width: 400px; line-height: 1.65; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
+
+.chip {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; color: #b0b0cc;
+  font-size: 12px; padding: 7px 15px;
+  cursor: pointer; transition: all .18s; font-family: inherit;
+}
+.chip:hover { border-color: var(--accent); color: var(--text); }
+
+/* 消息行 */
+.msg-row { display: flex; gap: 9px; align-items: flex-start; }
+.msg-row.user { flex-direction: row-reverse; }
+
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 14px; margin-top: 2px;
+}
+.avatar.asst { background: linear-gradient(135deg, var(--accent), #7c6af5); }
+.avatar.user { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #0d0d11; }
+
+.bubble-wrap { max-width: 72%; display: flex; flex-direction: column; gap: 5px; }
+.msg-row.user .bubble-wrap { align-items: flex-end; }
+
+.bubble {
+  padding: 11px 15px;
+  border-radius: var(--r);
+  font-size: 14px; line-height: 1.72;
+  word-break: break-word;
+}
+.bubble.user {
+  background: var(--user-bg);
+  border: 1px solid var(--user-bd);
+  color: #d8e8ff;
+  border-bottom-right-radius: 3px;
+}
+.bubble.asst {
+  background: var(--asst-bg);
+  border: 1px solid var(--asst-bd);
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+}
+
+/* 打字动画 */
+.dots { display: flex; gap: 5px; align-items: center; padding: 3px 0; }
+.dots span {
+  width: 7px; height: 7px;
+  background: var(--sub); border-radius: 50%;
+  animation: dot-bounce 1.2s infinite ease-in-out;
+}
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dot-bounce {
+  0%,60%,100% { transform: translateY(0); opacity:.5; }
+  30%          { transform: translateY(-6px); opacity:1; }
+}
+
+/* 溯源信息 */
+.sources {
+  margin-top: 9px; padding-top: 9px;
+  border-top: 1px solid var(--border);
+}
+.sources-lbl {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--sub); margin-bottom: 5px;
+}
+.src-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.src-tag {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 5px; color: var(--accent);
+  font-size: 11px; padding: 3px 9px;
+  text-decoration: none; transition: border-color .18s;
+}
+.src-tag:hover { border-color: var(--accent); }
+
+/* LLM 标注 */
+.llm-note {
+  font-size: 11px; color: #555568; font-style: italic;
+  margin-top: 7px; display: flex; align-items: center; gap: 4px;
+}
+
+/* 反馈按钮 */
+.feedback {
+  display: flex; gap: 6px; margin-top: 9px; padding-top: 9px;
+  border-top: 1px solid var(--border);
+}
+.fb {
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--sub);
+  font-size: 11px; padding: 4px 10px;
+  cursor: pointer; transition: all .18s; font-family: inherit;
+}
+.fb:hover { border-color: var(--accent); color: var(--accent); }
+.fb.active { background: #162040; border-color: var(--accent); color: var(--accent); }
+.fb.bad:hover { border-color: var(--red); color: var(--red); }
+.fb.bad.active { background: #2a1010; border-color: var(--red); color: var(--red); }
+
+/* 推荐追问 */
+.suggestions { padding: 0 22px 10px; display: flex; flex-wrap: wrap; gap: 7px; }
+.sug-btn {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 18px; color: #b0b0cc;
+  font-size: 12px; padding: 5px 13px;
+  cursor: pointer; transition: all .18s; font-family: inherit;
+}
+.sug-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* 输入区 */
+.input-area {
+  display: flex; align-items: flex-end; gap: 9px;
+  padding: 11px 22px 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.input-box {
+  flex: 1;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 11px;
+  display: flex; align-items: flex-end;
+  padding: 9px 13px; gap: 8px;
+  transition: border-color .18s;
+}
+.input-box:focus-within { border-color: var(--accent); }
+
+#q-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 14px; font-family: inherit;
+  resize: none; line-height: 1.6; min-height: 22px; max-height: 120px;
+}
+#q-input::placeholder { color: #45455a; }
+#q-input:disabled { opacity: .5; }
+
+.char-cnt { font-size: 11px; color: #45455a; flex-shrink: 0; align-self: flex-end; padding-bottom: 1px; }
+
+.send-btn {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--accent), #7c6af5);
+  border: none; border-radius: 11px; color: #fff;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: opacity .2s, transform .15s; flex-shrink: 0;
+}
+.send-btn:hover:not(:disabled) { transform: scale(1.06); }
+.send-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.hint { text-align: center; font-size: 11px; color: #303040; padding: 0 0 9px; }
+
+/* 加载环 */
+.spin {
+  width: 17px; height: 17px;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── 左侧栏 ── -->
+  <aside class="sidebar">
+    <div class="logo-row">
+      <div class="logo-mark">文</div>
+      <div class="logo-title">海外文物<br>知识问答</div>
+    </div>
+
+    <div>
+      <p class="sec-label">快速提问</p>
+      <div class="quick-list" id="quick-list">
+        <!-- JS 渲染 -->
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="badge">BUCT</span>
+      <span class="badge">Neo4j</span>
+      <span class="badge">RAG</span>
+    </div>
+  </aside>
+
+  <!-- ── 主区域 ── -->
+  <main class="chat-main">
+    <!-- 顶栏 -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="status-dot"></div>
+        <span class="topbar-title">知识问答助手</span>
+      </div>
+      <button class="clear-btn" onclick="clearChat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+        </svg>
+        清空对话
+      </button>
+    </div>
+
+    <!-- 消息列表 -->
+    <div class="msgs" id="msgs">
+      <!-- 欢迎屏，有消息后隐藏 -->
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🏛</div>
+        <h2>您好，我是知识问答助手</h2>
+        <p>基于知识图谱与大语言模型，解答海外藏中国文物相关问题</p>
+        <div class="chip-row" id="chip-row">
+          <!-- JS 渲染 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 推荐追问 -->
+    <div class="suggestions" id="suggestions"></div>
+
+    <!-- 输入区 -->
+    <div class="input-area">
+      <div class="input-box">
+        <textarea id="q-input" placeholder="请输入你的问题" rows="1" maxlength="300"></textarea>
+        <span class="char-cnt" id="char-cnt">0 / 300</span>
+      </div>
+      <button class="send-btn" id="send-btn" onclick="sendMsg()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+    <p class="hint">Enter 发送 · Shift+Enter 换行</p>
+  </main>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// 配置：后端接口地址
+// 开发时 FastAPI 默认 8000 端口，和前端同源则填 /api/qa
+// ──────────────────────────────────────────────
+const API_BASE = '/api/qa';
+
+// 快捷提问 & 欢迎芯片
+const QUICK = [
+  '青花瓷现在藏在哪里？',
+  '唐代有哪些代表性文物？',
+  '大都会博物馆收藏了多少中国文物？',
+  '介绍一下克利夫兰博物馆',
+  '王羲之作品在哪些海外博物馆？',
+];
+
+// 意图 → 推荐追问
+const SUGGESTIONS = {
+  ARTIFACT_LOCATION:     (e) => [`${e}是什么朝代的？`, `${e}的材质是什么？`],
+  ARTIFACT_PERIOD:       (e) => [`${e}现藏于哪里？`, `${e}的作者是谁？`],
+  ARTIFACT_MATERIAL:     (e) => [`${e}的尺寸是多少？`, `与${e}相似的文物有哪些？`],
+  ARTIFACT_INTRODUCTION: (e) => [`${e}的作者是谁？`, `${e}属于哪个朝代？`],
+  AUTHOR_BIOGRAPHY:      (e) => [`${e}有哪些作品在海外？`, `${e}是哪个朝代的？`],
+  DYNASTY_ARTIFACTS:     (e) => [`${e}时期的瓷器有什么特点？`, `${e}之后是哪个朝代？`],
+};
+
+// 状态
+let sessionId = newSession();
+let loading = false;
+let msgCount = 0;
+
+// ── 初始化 ────────────────────────────────────
+(function init() {
+  // 渲染快捷按钮
+  const ql = document.getElementById('quick-list');
+  QUICK.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.textContent = q;
+    btn.onclick = () => quickAsk(q);
+    ql.appendChild(btn);
+  });
+
+  // 渲染欢迎芯片
+  const cr = document.getElementById('chip-row');
+  QUICK.slice(0, 4).forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = q;
+    btn.onclick = () => quickAsk(q);
+    cr.appendChild(btn);
+  });
+
+  // 输入框事件
+  const ta = document.getElementById('q-input');
+  ta.addEventListener('input', () => {
+    document.getElementById('char-cnt').textContent = ta.value.length + ' / 300';
+    document.getElementById('send-btn').disabled = !ta.value.trim() || loading;
+    autoResize(ta);
+  });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  });
+})();
+
+// ── 发送消息 ──────────────────────────────────
+async function sendMsg() {
+  const ta = document.getElementById('q-input');
+  const text = ta.value.trim();
+  if (!text || loading) return;
+
+  ta.value = '';
+  document.getElementById('char-cnt').textContent = '0 / 300';
+  autoResize(ta);
+  hideSuggestions();
+
+  // 隐藏欢迎屏
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  // 渲染用户消息
+  appendMsg('user', text);
+
+  // 渲染加载占位
+  const loadingId = 'load-' + Date.now();
+  appendLoading(loadingId);
+
+  setLoading(true);
+  scrollBottom();
+
+  try {
+    // ── 调用后端 POST /api/qa/ask ──────────────
+    // 请求体对应 AskRequest schema
+    const res = await fetch(API_BASE + '/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: text, session_id: sessionId }),
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // 响应体对应 AskResponse schema：
+    // { answer_id, question, answer, intent, entity,
+    //   sources, has_kg_facts, has_llm_content, not_found }
+    const data = await res.json();
+// data 就是你 AskResponse 的全部字段：
+// data.answer       → 显示在气泡里的回答文字
+// data.sources      → 渲染成底部的博物馆来源标签
+// data.has_llm_content + data.has_kg_facts → 控制是否显示"部分内容由AI生成"
+// data.intent / data.entity → 用来生成推荐追问按钮
+// data.answer_id    → 反馈时要带上的ID
+
+    // 替换加载占位为真实回答
+    replaceLoading(loadingId, data);
+
+    // 生成推荐追问
+    renderSuggestions(data.intent, data.entity);
+
+  } catch (err) {
+    replaceLoadingError(loadingId);
+    console.error('[QA]', err);
+  } finally {
+    setLoading(false);
+    scrollBottom();
+  }
+}
+
+function quickAsk(q) {
+  document.getElementById('q-input').value = q;
+  document.getElementById('send-btn').disabled = false;
+  sendMsg();
+}
+
+// ── 渲染消息 ──────────────────────────────────
+function appendMsg(role, text) {
+  const msgs = document.getElementById('msgs');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+  row.innerHTML = `
+    <div class="avatar ${role === 'user' ? 'user' : 'asst'}">
+      ${role === 'user' ? '👤' : '🤖'}
+    </div>
+    <div class="bubble-wrap">
+      <div class="bubble ${role === 'user' ? 'user' : 'asst'}">
+        ${escHtml(text).replace(/\n/g, '<br>')}
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+  msgCount++;
+}
+
+function appendLoading(id) {
+  const msgs = document.getElementById('msgs');
+  const row = document.createElement('div');
+  row.className = 'msg-row asst';
+  row.id = id;
+  row.innerHTML = `
+    <div class="avatar asst">🤖</div>
+    <div class="bubble-wrap">
+      <div class="bubble asst">
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+}
+
+function replaceLoading(id, data) {
+  const row = document.getElementById(id);
+  if (!row) return;
+
+  // 溯源标签 HTML
+  let sourcesHtml = '';
+  if (data.sources && data.sources.length > 0) {
+    const tags = data.sources.map(s =>
+      s.detail_url
+  ? `<a href="${escHtml(s.detail_url)}" target="_blank" class="src-tag">${escHtml(s.museum_name)}</a>`
+  : `<span class="src-tag">${escHtml(s.museum_name)}</span>`
+    ).join('');
+    sourcesHtml = `
+      <div class="sources">
+        <div class="sources-lbl">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          数据来源
+        </div>
+        <div class="src-tags">${tags}</div>
+      </div>`;
+  }
+
+  // LLM 标注
+  const llmNote = (data.has_llm_content && data.has_kg_facts)
+    ? `<div class="llm-note">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        部分内容由AI生成，事实数据来自知识图谱
+       </div>`
+    : '';
+
+  // 反馈按钮
+  const answerId = data.answer_id || '';
+  const feedbackHtml = answerId ? `
+    <div class="feedback">
+      <button class="fb" id="fb-good-${answerId}" onclick="submitFeedback('${answerId}', true, this)">
+        👍 有帮助
+      </button>
+      <button class="fb bad" id="fb-bad-${answerId}" onclick="submitFeedback('${answerId}', false, this)">
+        👎 不准确
+      </button>
+    </div>` : '';
+
+  row.innerHTML = `
+    <div class="avatar asst">🤖</div>
+    <div class="bubble-wrap">
+      <div class="bubble asst">
+        ${escHtml(data.answer).replace(/\n/g, '<br>')}
+        ${sourcesHtml}
+        ${llmNote}
+        ${feedbackHtml}
+      </div>
+    </div>`;
+}
+
+function replaceLoadingError(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.innerHTML = `
+    <div class="avatar asst">🤖</div>
+    <div class="bubble-wrap">
+      <div class="bubble asst" style="color:#e05a5a">
+        抱歉，服务暂时不可用，请稍后重试。
+      </div>
+    </div>`;
+}
+
+// ── 反馈 ──────────────────────────────────────
+// 对应 POST /api/qa/feedback
+async function submitFeedback(answerId, isHelpful, btn) {
+  // 标记已反馈
+  btn.classList.add('active');
+  btn.disabled = true;
+  const sibling = isHelpful
+    ? document.getElementById('fb-bad-' + answerId)
+    : document.getElementById('fb-good-' + answerId);
+  if (sibling) sibling.disabled = true;
+
+  try {
+    await fetch(API_BASE + '/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answer_id: answerId, is_helpful: isHelpful }),
+    });
+  } catch (e) {
+    console.warn('[反馈失败]', e);
+  }
+}
+
+// ── 推荐追问 ──────────────────────────────────
+function renderSuggestions(intent, entity) {
+  const box = document.getElementById('suggestions');
+  box.innerHTML = '';
+  if (!intent || !entity || !SUGGESTIONS[intent]) return;
+  const qs = SUGGESTIONS[intent](entity);
+  qs.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'sug-btn';
+    btn.textContent = q;
+    btn.onclick = () => quickAsk(q);
+    box.appendChild(btn);
+  });
+}
+
+function hideSuggestions() {
+  document.getElementById('suggestions').innerHTML = '';
+}
+
+// ── 工具 ──────────────────────────────────────
+function clearChat() {
+  const msgs = document.getElementById('msgs');
+  msgs.innerHTML = '';
+  hideSuggestions();
+  sessionId = newSession();
+  msgCount = 0;
+  // 重新插入欢迎屏
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.id = 'welcome';
+  welcome.innerHTML = `
+    <div class="welcome-icon">🏛</div>
+    <h2>您好，我是知识问答助手</h2>
+    <p>基于知识图谱与大语言模型，解答海外藏中国文物相关问题</p>
+    <div class="chip-row">${QUICK.slice(0,4).map(q =>
+      `<button class="chip" onclick="quickAsk('${q}')">${q}</button>`
+    ).join('')}</div>`;
+  msgs.appendChild(welcome);
+}
+
+function setLoading(state) {
+  loading = state;
+  document.getElementById('send-btn').disabled = state;
+  document.getElementById('q-input').disabled = state;
+  if (state) {
+    document.getElementById('send-btn').innerHTML = '<div class="spin"></div>';
+  } else {
+    document.getElementById('send-btn').innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>`;
+  }
+}
+
+function scrollBottom() {
+  const msgs = document.getElementById('msgs');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+function newSession() {
+  return 'sess_' + Math.random().toString(36).slice(2, 10);
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
