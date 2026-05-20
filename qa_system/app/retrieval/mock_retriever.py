@@ -2,6 +2,11 @@
 app/retrieval/mock_retriever.py — Mock 数据检索器
 【负责人：成员C】
 
+职责：在子系统1（知识图谱）尚未完成接入的时候，提供假数据让整个流程可以运行。
+""""""
+app/retrieval/mock_retriever.py — Mock 数据检索器
+【负责人：成员C】
+
 职责：在子系统1（知识图谱）尚未完成接入的时候，提供假数据让整个流程可以运行。（测试中使用，优先级没有很强）
 
 使用方式：config.py 中设置 MOCK_MODE=True，QAEngine 会自动使用此模块。
@@ -20,12 +25,12 @@ from app.core.intent_types import Intent
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Mock 数据库
-# 字段名必须和 query_builder.py 中 Cypher 的 RETURN 字段名完全一致
+# Mock 数据库（每个意图至少3条数据）
 # ══════════════════════════════════════════════════════════════════════════════
 
 MOCK_DATA = {
 
+    # ==================== 1. 文物收藏地 ====================
     Intent.ARTIFACT_LOCATION: [
         {
             "artifact_name": "青花云龙纹罐",
@@ -43,8 +48,17 @@ MOCK_DATA = {
             "city": "New York",
             "country": "USA",
         },
+        {
+            "artifact_name": "青铜爵",
+            "object_id": "SHM_001",
+            "detail_url": "https://www.shanghaimuseum.net/art/001",
+            "museum_name": "上海博物馆",
+            "city": "上海",
+            "country": "China",
+        },
     ],
 
+    # ==================== 2. 文物年代 ====================
     Intent.ARTIFACT_PERIOD: [
         {
             "artifact_name": "青花云龙纹罐",
@@ -54,45 +68,109 @@ MOCK_DATA = {
             "start_year": "1271",
             "end_year": "1368",
         },
+        {
+            "artifact_name": "溪山清远图",
+            "object_id": "MET_9012",
+            "detail_url": "https://www.metmuseum.org/art/collection/9012",
+            "dynasty_name": "南宋",
+            "start_year": "1127",
+            "end_year": "1279",
+        },
+        {
+            "artifact_name": "玉琮",
+            "object_id": "ZJM_002",
+            "detail_url": "https://www.zjmuseum.com/art/002",
+            "dynasty_name": "良渚文化",
+            "start_year": "约3300",
+            "end_year": "约2300",
+        },
     ],
 
+    # ==================== 3. 文物材质 ====================
     Intent.ARTIFACT_MATERIAL: [
         {
             "artifact_name": "青花云龙纹罐",
             "object_id": "CMA_1234",
             "detail_url": "https://www.clevelandart.org/art/1234",
-            "material": "Porcelain with cobalt blue underglaze",
+            "material": "青花瓷",
             "museum_name": "Cleveland Museum of Art",
+        },
+        {
+            "artifact_name": "青铜爵",
+            "object_id": "SHM_001",
+            "detail_url": "https://www.shanghaimuseum.net/art/001",
+            "material": "青铜",
+            "museum_name": "上海博物馆",
+        },
+        {
+            "artifact_name": "玉琮",
+            "object_id": "ZJM_002",
+            "detail_url": "https://www.zjmuseum.com/art/002",
+            "material": "玉石",
+            "museum_name": "浙江省博物馆",
         },
     ],
 
+    # ==================== 4. 文物类型 ====================
     Intent.ARTIFACT_TYPE: [
         {
             "artifact_name": "青花云龙纹罐",
             "object_id": "CMA_1234",
             "detail_url": "https://www.clevelandart.org/art/1234",
-            "artifact_type": "Ceramics",
+            "artifact_type": "瓷器",
             "museum_name": "Cleveland Museum of Art",
+        },
+        {
+            "artifact_name": "青铜爵",
+            "object_id": "SHM_001",
+            "detail_url": "https://www.shanghaimuseum.net/art/001",
+            "artifact_type": "酒器",
+            "museum_name": "上海博物馆",
+        },
+        {
+            "artifact_name": "溪山清远图",
+            "object_id": "MET_9012",
+            "detail_url": "https://www.metmuseum.org/art/collection/9012",
+            "artifact_type": "绘画",
+            "museum_name": "The Metropolitan Museum of Art",
         },
     ],
 
+    # ==================== 5. 文物介绍 ====================
     Intent.ARTIFACT_INTRODUCTION: [
         {
             "artifact_name": "青花云龙纹罐",
             "object_id": "CMA_1234",
             "detail_url": "https://www.clevelandart.org/art/1234",
-            "description": (
-                "This Yuan dynasty jar features a dynamic dragon amid clouds, "
-                "rendered in cobalt blue on white porcelain. The bold brushwork "
-                "and lively composition exemplify the finest Yuan blue-and-white ware."
-            ),
-            "artifact_type": "Ceramics",
-            "material": "Porcelain with cobalt blue underglaze",
+            "description": "元代青花瓷代表作，绘有云龙纹，笔触豪放，青花发色浓郁。",
+            "artifact_type": "瓷器",
+            "material": "青花瓷",
             "museum_name": "Cleveland Museum of Art",
             "dynasty_name": "元朝",
         },
+        {
+            "artifact_name": "青铜爵",
+            "object_id": "SHM_001",
+            "detail_url": "https://www.shanghaimuseum.net/art/001",
+            "description": "商代青铜酒器，造型古朴，纹饰精美，是研究商代礼制的重要实物。",
+            "artifact_type": "酒器",
+            "material": "青铜",
+            "museum_name": "上海博物馆",
+            "dynasty_name": "商代",
+        },
+        {
+            "artifact_name": "玉琮",
+            "object_id": "ZJM_002",
+            "detail_url": "https://www.zjmuseum.com/art/002",
+            "description": "良渚文化玉器，内圆外方，是古代祭祀用的礼器。",
+            "artifact_type": "玉器",
+            "material": "玉石",
+            "museum_name": "浙江省博物馆",
+            "dynasty_name": "良渚文化",
+        },
     ],
 
+    # ==================== 6. 文物作者 ====================
     Intent.ARTIFACT_AUTHOR: [
         {
             "artifact_name": "溪山清远图",
@@ -101,44 +179,76 @@ MOCK_DATA = {
             "artist_name": "夏圭",
             "museum_name": "The Metropolitan Museum of Art",
         },
-    ],
-
-    Intent.AUTHOR_BIOGRAPHY: [
         {
-            "artist_name": "夏圭",
-            "biography": (
-                "夏圭，字禹玉，钱塘（今浙江杭州）人，南宋著名画家。"
-                "与马远齐名，并称"'马夏'"，是南宋院体画的代表人物之一。"
-                "擅长山水画，笔墨简练，意境深远，对后世影响深远。"
-            ),
-            "birth_year": "约1195",
-            "death_year": "约1224",
+            "artifact_name": "富春山居图",
+            "object_id": "ZJM_003",
+            "detail_url": "https://www.zjmuseum.com/art/003",
+            "artist_name": "黄公望",
+            "museum_name": "浙江省博物馆",
+        },
+        {
+            "artifact_name": "洛神赋图",
+            "object_id": "GWM_004",
+            "detail_url": "https://www.gugongmuseum.com/art/004",
+            "artist_name": "顾恺之",
+            "museum_name": "故宫博物院",
         },
     ],
 
+    # ==================== 7. 作者生平 ====================
+    Intent.AUTHOR_BIOGRAPHY: [
+        {
+            "artist_name": "夏圭",
+            "biography": "夏圭，字禹玉，钱塘（今浙江杭州）人，南宋著名画家。与马远齐名，并称'马夏'，是南宋院体画的代表人物之一。",
+            "birth_year": "约1195",
+            "death_year": "约1224",
+        },
+        {
+            "artist_name": "黄公望",
+            "biography": "黄公望，字子久，号大痴，元代著名画家。擅画山水，代表作《富春山居图》。",
+            "birth_year": "1269",
+            "death_year": "1354",
+        },
+        {
+            "artist_name": "顾恺之",
+            "biography": "顾恺之，字长康，东晋著名画家、绘画理论家。代表作《洛神赋图》。",
+            "birth_year": "约344",
+            "death_year": "约406",
+        },
+    ],
+
+    # ==================== 8. 同作者其他作品 ====================
     Intent.AUTHOR_OTHER_WORKS: [
         {
             "artifact_name": "溪山清远图",
             "object_id": "MET_9012",
             "detail_url": "https://www.metmuseum.org/art/collection/9012",
-            "artifact_type": "Painting",
+            "artifact_type": "绘画",
             "museum_name": "The Metropolitan Museum of Art",
         },
         {
             "artifact_name": "雪堂客话图",
             "object_id": "MFA_3456",
             "detail_url": "https://www.mfa.org/collections/3456",
-            "artifact_type": "Painting",
+            "artifact_type": "绘画",
             "museum_name": "Museum of Fine Arts, Boston",
+        },
+        {
+            "artifact_name": "山水四景图",
+            "object_id": "GWM_005",
+            "detail_url": "https://www.gugongmuseum.com/art/005",
+            "artifact_type": "绘画",
+            "museum_name": "故宫博物院",
         },
     ],
 
+    # ==================== 9. 同朝代文物 ====================
     Intent.DYNASTY_ARTIFACTS: [
         {
             "artifact_name": "青花云龙纹罐",
             "object_id": "CMA_1234",
             "detail_url": "https://www.clevelandart.org/art/1234",
-            "artifact_type": "Ceramics",
+            "artifact_type": "瓷器",
             "museum_name": "Cleveland Museum of Art",
             "dynasty_name": "元朝",
         },
@@ -146,19 +256,42 @@ MOCK_DATA = {
             "artifact_name": "青花缠枝牡丹纹梅瓶",
             "object_id": "MET_2345",
             "detail_url": "https://www.metmuseum.org/art/collection/2345",
-            "artifact_type": "Ceramics",
+            "artifact_type": "瓷器",
             "museum_name": "The Metropolitan Museum of Art",
+            "dynasty_name": "元朝",
+        },
+        {
+            "artifact_name": "元青花人物故事罐",
+            "object_id": "HBM_006",
+            "detail_url": "https://www.hbmuseum.com/art/006",
+            "artifact_type": "瓷器",
+            "museum_name": "湖北省博物馆",
             "dynasty_name": "元朝",
         },
     ],
 
+    # ==================== 10. 文物尺寸 ====================
     Intent.ARTIFACT_DIMENSIONS: [
         {
             "artifact_name": "青花云龙纹罐",
             "object_id": "CMA_1234",
             "detail_url": "https://www.clevelandart.org/art/1234",
-            "dimensions": "H. 33.7 cm (13 1/4 in.)",
+            "dimensions": "高33.7厘米，口径15.2厘米",
             "museum_name": "Cleveland Museum of Art",
+        },
+        {
+            "artifact_name": "青铜爵",
+            "object_id": "SHM_001",
+            "detail_url": "https://www.shanghaimuseum.net/art/001",
+            "dimensions": "高20.5厘米，长16.8厘米",
+            "museum_name": "上海博物馆",
+        },
+        {
+            "artifact_name": "玉琮",
+            "object_id": "ZJM_002",
+            "detail_url": "https://www.zjmuseum.com/art/002",
+            "dimensions": "高8.9厘米，边长7.2厘米",
+            "museum_name": "浙江省博物馆",
         },
     ],
 }
@@ -166,66 +299,63 @@ MOCK_DATA = {
 
 class MockRetriever:
     """
-    Mock 检索器，接口与 GraphRetriever 完全相同（同名方法，同返回格式）。
-    QAEngine 通过 MOCK_MODE 自动选择使用哪个，切换时无需修改任何其他代码。
+    Mock 检索器，接口与 GraphRetriever 完全相同。
+    QAEngine 通过 MOCK_MODE 自动选择使用哪个。
     """
 
     async def retrieve(self, cypher: str, params: dict) -> list:
         """
         根据查询参数，从 Mock 数据库中返回匹配的数据。
         
-        当前实现：根据意图类型返回对应的 Mock 数据（忽略实体名过滤）。
-        
-        【成员C可优化】：让 Mock 数据支持按实体名过滤，更真实地模拟图谱行为。
-        比如：查询"青花瓷"时只返回名称包含"青花"的记录。
+        支持按实体名过滤：
+        - 如果实体名不为空，只返回名称中包含实体名的记录
+        - 如果过滤后为空，返回空列表（触发 not_found 逻辑）
         """
-        # 从 Cypher 语句中推断意图（通过查询语句的特征）
-        # 这是简化实现，成员C可以改为通过额外参数传递意图
+        # 1. 从 Cypher 语句推断意图
         intent = self._infer_intent_from_cypher(cypher)
+        
+        # 2. 获取该意图的 Mock 数据
         entity = params.get("entity", "")
-
         mock_list = MOCK_DATA.get(intent, [])
 
-        # 简单过滤：如果实体名不为空，只返回名称中包含实体名的记录
+        # 3. 按实体名过滤（模拟真实图谱查询）
         if entity and mock_list:
-            filtered = [
-                r for r in mock_list
-                if entity.lower() in r.get("artifact_name", "").lower()
-                or entity.lower() in r.get("artist_name", "").lower()
-                or entity.lower() in r.get("dynasty_name", "").lower()
-            ]
-            # 如果过滤后为空（实体名不匹配），返回空列表，触发 not_found 逻辑
+            filtered = []
+            for r in mock_list:
+                # 检查文物名、艺术家名、朝代名是否包含实体关键词
+                if entity.lower() in r.get("artifact_name", "").lower():
+                    filtered.append(r)
+                elif entity.lower() in r.get("artist_name", "").lower():
+                    filtered.append(r)
+                elif entity.lower() in r.get("dynasty_name", "").lower():
+                    filtered.append(r)
+            
+            # 如果过滤后为空，返回空列表（测试 not_found 逻辑）
             return filtered if filtered else []
 
         return mock_list
 
     def _infer_intent_from_cypher(self, cypher: str) -> str:
-        """根据 Cypher 语句中的关键特征推断意图类型"""
-        cypher_lower = cypher.lower()
-        if "biography" in cypher_lower or "bio" in cypher_lower:
+        """根据 Cypher 语句特征推断意图类型"""
+        c = cypher.lower()
+        
+        if "biography" in c:
             return Intent.AUTHOR_BIOGRAPHY
-        if "birth_year" in cypher_lower and "artist" in cypher_lower:
-            return Intent.AUTHOR_BIOGRAPHY
-        if "dynasty_name" in cypher_lower and "artifact_name" in cypher_lower and "museum_name" not in cypher_lower:
-            return Intent.ARTIFACT_PERIOD
-        if "artist_name" in cypher_lower and "museum_name" in cypher_lower and "artifact_name" in cypher_lower:
-            # AUTHOR_OTHER_WORKS 和 ARTIFACT_AUTHOR 都有这些字段，通过 rel 方向区分
-            if "created_by" in cypher_lower and "<-" in cypher_lower:
-                return Intent.AUTHOR_OTHER_WORKS
-            return Intent.ARTIFACT_AUTHOR
-        if "biography" in cypher_lower:
-            return Intent.AUTHOR_BIOGRAPHY
-        if "dimensions" in cypher_lower:
+        if "dimensions" in c:
             return Intent.ARTIFACT_DIMENSIONS
-        if "description" in cypher_lower:
+        if "description" in c:
             return Intent.ARTIFACT_INTRODUCTION
-        if "artifact_type" in cypher_lower and "dynasty_name" in cypher_lower:
+        if "artist_name" in c and "created_by" in c:
+            return Intent.AUTHOR_OTHER_WORKS
+        if "artist_name" in c:
+            return Intent.ARTIFACT_AUTHOR
+        if "dynasty_name" in c and "artifact_type" in c:
             return Intent.DYNASTY_ARTIFACTS
-        if "artifact_type" in cypher_lower:
-            return Intent.ARTIFACT_TYPE
-        if "material" in cypher_lower:
-            return Intent.ARTIFACT_MATERIAL
-        if "dynasty_name" in cypher_lower:
+        if "dynasty_name" in c:
             return Intent.ARTIFACT_PERIOD
-        # 默认返回收藏地
+        if "artifact_type" in c:
+            return Intent.ARTIFACT_TYPE
+        if "material" in c:
+            return Intent.ARTIFACT_MATERIAL
+        
         return Intent.ARTIFACT_LOCATION
