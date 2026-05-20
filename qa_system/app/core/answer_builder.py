@@ -33,8 +33,8 @@ FACT_TEMPLATES = {
     Intent.ARTIFACT_PERIOD: lambda r: (
         f"文物《{r.get('artifact_name', '未知')}》"
         f"属于{r.get('dynasty_name', '未知朝代')}时期"
-        + (f"（{r.get('start_year', '')}—{r.get('end_year', '')}年）。"
-           if r.get('start_year') else "。")
+        + (f"（{r.get('period_start_year', '')}—{r.get('period_end_year', '')}年）。"
+           if r.get('period_start_year') else "。")
     ),
     Intent.ARTIFACT_MATERIAL: lambda r: (
         f"文物《{r.get('artifact_name', '未知')}》"
@@ -60,9 +60,9 @@ FACT_TEMPLATES = {
     ),
     Intent.AUTHOR_BIOGRAPHY: lambda r: (
         f"{r.get('artist_name', '未知艺术家')}"
-        + (f"（{r.get('birth_year', '')}—{r.get('death_year', '')}）"
-           if r.get('birth_year') else "")
-        + (f"：{r.get('biography', '')}" if r.get('biography') else "，暂无详细生平记录。")
+        + (f"（{r.get('artist_birth', '')}—{r.get('aritist_death', '')}）"
+           if r.get('artist_birth') else "")
+        + (f"：{r.get('artist_bio', '')}" if r.get('artist_bio') else "，暂无详细生平记录。")
     ),
     Intent.AUTHOR_OTHER_WORKS: lambda r: (
         f"《{r.get('artifact_name', '未知')}》（{r.get('artifact_type', '')}），"
