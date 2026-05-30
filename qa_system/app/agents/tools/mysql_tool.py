@@ -171,6 +171,7 @@ async def execute_sql(query: str, params: tuple = ()) -> str:
     logging.info(f"[MySQL] execute_sql called")
     logging.info(f"[MySQL] Query: {query}")
     logging.info(f"[MySQL] Params: {params}")
+    logging.info(f"[MySQL] Params type: {type(params)}")
 
     if not query or len(query.strip()) == 0:
         return json.dumps({"error": "查询语句不能为空"})
@@ -184,10 +185,20 @@ async def execute_sql(query: str, params: tuple = ()) -> str:
     try:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute(query, params)
+                logging.info(f"[MySQL] Executing query...")
+                try:
+                    await cur.execute(query, params if params else None)
+                except Exception as exec_err:
+                    logging.error(f"[MySQL] Execute failed: {exec_err}")
+                    logging.error(f"[MySQL] Query was: {query}")
+                    raise
                 rows = await cur.fetchall()
 
-                logging.info(f"[MySQL] Query executed, returned {len(rows)} rows")
+                logging.info(f"[MySQL] Query executed successfully")
+                logging.info(f"[MySQL] Returned {len(rows)} rows")
+                if rows:
+                    logging.info(f"[MySQL] First row keys: {list(rows[0].keys()) if rows else []}")
+                    logging.info(f"[MySQL] First row sample: {rows[0] if rows else None}")
 
                 if not rows:
                     return json.dumps([], ensure_ascii=False)

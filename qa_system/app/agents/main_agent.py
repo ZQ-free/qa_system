@@ -22,12 +22,14 @@ async def run_main_agent(
     history: list,
     token_callback: Callable[[str], None],
     done_callback: Callable[[Any], None],
+    session_id: str = "",
     agent_step_callback: Optional[Callable[[str, str], None]] = None,
     stop_event: Optional[asyncio.Event] = None,
 ) -> None:
     import logging
     logging.info(f"[MainAgent] Processing: {question[:50]}...")
     logging.info(f"[MainAgent] === Starting Main Agent ===")
+    logging.info(f"[MainAgent] Session: {session_id[:8] if session_id else 'none'}...")
 
     if stop_event is None:
         stop_event = asyncio.Event()
@@ -57,6 +59,7 @@ async def run_main_agent(
     logging.info(f"[MainAgent] Calling Graph Agent for RAG context...")
     graph_result = await run_graph_agent(
         question=question,
+        session_id=session_id,
         stop_event=stop_event,
         on_tool_call=on_tool_call,
         on_tool_result=on_tool_result,

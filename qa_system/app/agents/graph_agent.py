@@ -82,14 +82,18 @@ SYSTEM_PROMPT = """你是一个专门负责海外藏中国文物知识问答的"
 
 async def run_graph_agent(
     question: str,
+    session_id: str = "",
     on_thinking: Optional[Callable[[str], None]] = None,
     on_tool_call: Optional[Callable[[str, str], None]] = None,
     on_tool_result: Optional[Callable[[str, str], None]] = None,
     stop_event: Optional[asyncio.Event] = None,
 ) -> dict:
     import logging
+    from app.core.sql_memory import get_sql_memory
+
     logging.info(f"[GraphAgent] Processing: {question[:50]}...")
     logging.info(f"[GraphAgent] === Starting Graph Agent ===")
+    logging.info(f"[GraphAgent] Session: {session_id[:8] if session_id else 'none'}...")
 
     if stop_event is None:
         stop_event = asyncio.Event()
@@ -104,9 +108,17 @@ async def run_graph_agent(
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": question}
     ]
-    logging.info(f"[GraphAgent] Messages prepared")
+
+    if session_id:
+        sql_memory = get_sql_memory()
+        sql_context = sql_memory.get_full_context(session_id, max_records=10)
+        if sql_context:
+            messages[0]["content"] += f"\n\n{sql_context}"
+            logging.info(f"[GraphAgent] Added SQL context to system prompt, total length: {len(messages[0]['content'])}")
+
+    messages.append({"role": "user", "content": question})
+    logging.info(f"[GraphAgent] Messages prepared, total: {len(messages)}")
 
     max_turns = 10
     rag_context = ""
@@ -203,8 +215,21 @@ async def run_graph_agent(
 
                 if tc["name"] == "execute_sql":
                     query = args.get("query", "")
+                    logging.info(f"[GraphAgent] execute_sql called with query: {query}")
                     result = await execute_sql(query)
                     logging.info(f"[GraphAgent] execute_sql result: {len(result)} chars")
+
+                    if session_id:
+                        from app.core.sql_memory import get_sql_memory
+                        sql_memory = get_sql_memory()
+                        try:
+                            result_data = json.loads(result)
+                            result_count = len(result_data) if isinstance(result_data, list) else 0
+                        except:
+                            result_count = 0
+                        sql_memory.add_record(session_id, query, result, result_count)
+                        logging.info(f"[GraphAgent] Recorded SQL to memory")
+
                     messages.append({
                         "role": "tool",
                         "tool_call_id": tc["id"],

@@ -43,8 +43,13 @@ class SessionManager:
 
     async def delete_session(self, session_id: str) -> dict:
         from app.db.mysql_client import get_pool
+        from app.core.sql_memory import get_sql_memory
         import logging
         logging.info(f"[SessionManager] Deleting session: {session_id}")
+
+        sql_memory = get_sql_memory()
+        sql_memory.clear_session(session_id)
+        logging.info(f"[SessionManager] Cleared SQL memory for session")
 
         pool = await get_pool()
         try:
@@ -341,6 +346,7 @@ class SessionManager:
                 history=history,
                 token_callback=token_callback,
                 done_callback=done_callback,
+                session_id=ws_session_id,
                 agent_step_callback=agent_step_callback,
                 stop_event=stop_event,
             )
