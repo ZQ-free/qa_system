@@ -19,6 +19,7 @@ app/core/session_manager.py — 会话历史管理
   - streaming_done: 流式是否已完成（FALSE=正在生成中）
 """
 
+import asyncio
 import json
 import uuid
 from typing import Optional

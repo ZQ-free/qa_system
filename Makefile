@@ -1,4 +1,4 @@
-.PHONY: help install install-venv run stop status logs clean
+.PHONY: help install install-venv run stop status logs clean image-build
 
 PROJECT_ROOT := $(shell pwd)
 BACKEND_DIR := $(PROJECT_ROOT)/qa_system
@@ -6,6 +6,9 @@ FRONTEND_DIR := $(PROJECT_ROOT)/chat-web
 BACKEND_PID_FILE := $(PROJECT_ROOT)/.backend.pid
 FRONTEND_PID_FILE := $(PROJECT_ROOT)/.frontend.pid
 VENV_DIR := $(BACKEND_DIR)/.venv
+IMAGE_NAME := qa-backend
+IMAGE_TAG := latest
+SOURCE_DIR := $(PROJECT_ROOT)/source
 
 help:
 	@echo "Available commands:"
@@ -16,6 +19,7 @@ help:
 	@echo "  make status         - Show running status"
 	@echo "  make logs           - Show recent logs"
 	@echo "  make clean          - Clean up cache files"
+	@echo "  make image-build    - Build Docker image and export to source/"
 
 install:
 	@echo "Installing backend dependencies..."
@@ -96,3 +100,12 @@ clean:
 	@cd $(BACKEND_DIR) && rm -rf __pycache__ .pytest_cache .ruff_cache .venv 2>/dev/null || true
 	@find $(BACKEND_DIR) -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	@echo "Clean complete."
+
+image-build:
+	@echo "Building Docker image..."
+	@mkdir -p $(SOURCE_DIR)
+	@cd $(PROJECT_ROOT) && docker build -t $(IMAGE_NAME):$(IMAGE_TAG) -f $(BACKEND_DIR)/Dockerfile $(BACKEND_DIR)
+	@echo "Exporting image to $(SOURCE_DIR)/$(IMAGE_NAME)-$(IMAGE_TAG).tar..."
+	@docker save $(IMAGE_NAME):$(IMAGE_TAG) -o $(SOURCE_DIR)/$(IMAGE_NAME)-$(IMAGE_TAG).tar
+	@echo "Image saved: $(SOURCE_DIR)/$(IMAGE_NAME)-$(IMAGE_TAG).tar"
+	@echo "Image size: $$(du -h $(SOURCE_DIR)/$(IMAGE_NAME)-$(IMAGE_TAG).tar | cut -f1)"

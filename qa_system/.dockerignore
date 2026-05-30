@@ -1,0 +1,46 @@
+# Docker 构建忽略文件
+# 加速构建，避免复制不必要的文件
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# 日志
+*.log
+.backend.log
+.frontend.log
+
+# 测试
+htmlcov/
+.coverage
+.pytest_cache/
+tests/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# 文档
+*.md
+docs/
+
+# 其他
+*.pid
+*.sock

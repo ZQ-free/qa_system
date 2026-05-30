@@ -4,3 +4,5 @@ lib64/
 =1.12.0
 .log
 .pid
+source
+.env.example

@@ -1,0 +1,64 @@
+# ============================================================
+# docker-compose.yml — 后端服务编排
+#
+# 包含：
+#   - backend: Python/FastAPI 后端
+#
+# 使用外部云数据库，只需配置环境变量即可。
+#
+# 使用:
+#   docker-compose up -d          # 启动服务
+#   docker-compose logs -f         # 查看日志
+#   docker-compose down           # 停止服务
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ── 后端服务 ───────────────────────────────────────
+  backend:
+    build:
+      context: ./qa_system
+      dockerfile: Dockerfile
+    container_name: qa-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      # LLM 配置
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
+      - LLM_TIMEOUT=${LLM_TIMEOUT:-60}
+      - LLM_MAX_RETRIES=${LLM_MAX_RETRIES:-2}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-2048}
+      # MySQL 配置（云数据库）
+      - ENABLE_MYSQL=${ENABLE_MYSQL:-on}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB:-overseas_chinese_artifacts}
+      # Neo4j 配置（可选）
+      - ENABLE_NEO4J=${ENABLE_NEO4J:-off}
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      # 会话配置
+      - SESSION_MAX_TURNS=${SESSION_MAX_TURNS:-5}
+    networks:
+      - qa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# ── 网络 ──────────────────────────────────────────────
+networks:
+  qa-network:
+    driver: bridge

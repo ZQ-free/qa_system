@@ -60,20 +60,32 @@ export const useChatStore = defineStore('chat', () => {
   function handleMessage(msg: WSServerMessage) {
     console.log('[WS] Received:', msg.type, msg)
     if (msg.type === 'agent_step' && msg.step_type && msg.content) {
-      messages.value.push({
-        id: genId(),
-        role: 'assistant',
-        content: msg.content,
-        message_type: 'rag_agent',
-        agent_steps: [{
+      // 查找最后一个 RAG Agent 消息
+      const lastRagMsg = [...messages.value].reverse().find(m => m.message_type === 'rag_agent' && !m.streaming)
+      if (lastRagMsg && lastRagMsg.agent_steps) {
+        lastRagMsg.agent_steps.push({
           id: genId(),
           step_type: msg.step_type,
           content: msg.content,
           timestamp: Date.now(),
-        }],
-        streaming: false,
-        timestamp: Date.now(),
-      })
+        })
+      } else {
+        // 没有现有的 RAG 消息，创建新的
+        messages.value.push({
+          id: genId(),
+          role: 'assistant',
+          content: '',
+          message_type: 'rag_agent',
+          agent_steps: [{
+            id: genId(),
+            step_type: msg.step_type,
+            content: msg.content,
+            timestamp: Date.now(),
+          }],
+          streaming: false,
+          timestamp: Date.now(),
+        })
+      }
     } else if (msg.type === 'chunk' && msg.message_id !== undefined) {
       const existing = messages.value.find((m) => m.id === `stream-${msg.message_id}` || m.id === 'stream-pending')
       if (existing) {
