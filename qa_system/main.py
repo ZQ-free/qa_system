@@ -6,9 +6,10 @@ main.py — 应用入口
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles      # ← 加这行
-from fastapi.responses import FileResponse        # ← 加这行
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.api.qa_router import router as qa_router
+from app.api.ws_router import register_ws_router
 from config import settings
 
 app = FastAPI(
@@ -17,23 +18,33 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# 允许跨域，方便子系统2（Web前端）和子系统4（App）调用
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # 生产环境应改为指定域名
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 注册问答路由，所有接口都挂在 /api/qa 前缀下
 app.include_router(qa_router, prefix="/api/qa")
+register_ws_router(app)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    from app.db.mysql_client import MySQLClient
+    await MySQLClient.close_pool()
+
 
 @app.get("/")
 async def index():
     return FileResponse("app/static/index.html")
 
+
 @app.get("/health")
 def health_check():
-    """健康检查接口，供其他子系统确认服务是否在线"""
-    return {"status": "ok", "mock_mode": settings.MOCK_MODE}
+    return {
+        "status": "ok",
+        "enable_mysql": settings.ENABLE_MYSQL,
+        "enable_neo4j": settings.ENABLE_NEO4J,
+    }

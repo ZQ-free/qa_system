@@ -1,43 +1,30 @@
 """
 app/db/mysql_client.py — MySQL 数据库客户端
-【负责人：成员E】
 
 职责：
-  从 MySQL 中查询文物的详情页 URL 和其他补充信息。
-  这些数据不在图谱中（图谱存关系，MySQL 存完整详情），
-  由 AnswerBuilder 在组装溯源信息时调用。
+  从 MySQL 中查询文物信息，替代 Mock 数据，提供真实的文物数据。
+  同时支持溯源信息查询（detail_url 等）。
 
-为什么需要 MySQL？
-  知识图谱适合存关系和核心属性，但 detail_url 等链接信息
-  直接存在 MySQL 的文物表里查询更高效。连的是关系型数据库，
-  存的是文物的详细信息——文物详情页的网址、图片链接等。
-  这个主要是为了"答案溯源"功能，给用户附上"原始来源链接"时用到。
-
-【MySQL 表结构（目前的）】：
-  表名：artifacts
-  字段：
-    object_id (PK), title, artist, artist_province,
-    dynasty, period, type, material, description, dimensions,
-    museum, location, detail_url, image_url, image_path,
-    credit_line, accession_number, crawl_date
+MySQL 表结构（artifact 表，35列）：
+  联合主键：(object_id, museum_id)
+  核心字段：title, artist, dynasty, period, type, material, description, dimensions,
+            museum, location, detail_url, image_url, accession_number ...
 """
 
 import aiomysql
 from config import settings
 
 
+async def get_pool():
+    return await MySQLClient.get_pool()
+
+
 class MySQLClient:
-    """
-    MySQL 异步客户端。
-    
-    【成员E实现】
-    """
 
     _pool = None
 
     @classmethod
     async def get_pool(cls):
-        """获取（或创建）MySQL 连接池"""
         if cls._pool is None:
             cls._pool = await aiomysql.create_pool(
                 host=settings.MYSQL_HOST,
@@ -51,22 +38,131 @@ class MySQLClient:
         return cls._pool
 
     @classmethod
+    async def close_pool(cls):
+        if cls._pool:
+            cls._pool.close()
+            await cls._pool.wait_closed()
+            cls._pool = None
+
+    @classmethod
+    async def execute_query(cls, sql: str, params: tuple = ()) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(sql, params)
+                return await cur.fetchall()
+
+    @classmethod
     async def get_artifact_detail(cls, object_id: str) -> dict:
-        """
-        根据文物 ID 查询详情信息（主要用于获取 detail_url）。
-        
-        返回示例：
-          {"object_id": "CMA_1234", "detail_url": "https://...", "museum": "..."}
-        
-        【成员E实现】
-        """
-        # TODO: 成员E实现
-        # pool = await cls.get_pool()
-        # async with pool.acquire() as conn:
-        #     async with conn.cursor(aiomysql.DictCursor) as cur:
-        #         await cur.execute(
-        #             "SELECT object_id, detail_url, museum FROM artifacts WHERE object_id = %s",
-        #             (object_id,)
-        #         )
-        #         return await cur.fetchone() or {}
-        return {}
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT object_id, title, type, material, dynasty, period,
+                              description, dimensions, museum, location,
+                              detail_url, image_url, accession_number
+                       FROM artifact WHERE object_id = %s""",
+                    (object_id,)
+                )
+                return await cur.fetchone() or {}
+
+    @classmethod
+    async def search_by_title(cls, entity: str, limit: int = 5) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT object_id, title, artist, dynasty, period,
+                              type, material, culture, description, dimensions,
+                              museum, location, detail_url, image_url, accession_number,
+                              artist_bio, artist_birth, artist_death, artist_province
+                       FROM artifact
+                       WHERE title LIKE %s
+                       LIMIT %s""",
+                    (f"%{entity}%", limit)
+                )
+                return await cur.fetchall()
+
+    @classmethod
+    async def search_by_artist(cls, entity: str, limit: int = 10) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT object_id, title, artist, dynasty, period,
+                              type, material, description, dimensions,
+                              museum, location, detail_url, image_url, accession_number,
+                              artist_bio, artist_birth, artist_death, artist_province
+                       FROM artifact
+                       WHERE artist LIKE %s
+                       LIMIT %s""",
+                    (f"%{entity}%", limit)
+                )
+                return await cur.fetchall()
+
+    @classmethod
+    async def search_by_dynasty(cls, entity: str, limit: int = 10) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT object_id, title, artist, dynasty, period,
+                              type, material, description, dimensions,
+                              museum, location, detail_url, image_url, accession_number
+                       FROM artifact
+                       WHERE dynasty LIKE %s
+                       LIMIT %s""",
+                    (f"%{entity}%", limit)
+                )
+                return await cur.fetchall()
+
+    @classmethod
+    async def search_by_museum(cls, entity: str, limit: int = 10) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT museum, location, COUNT(*) AS artifact_count
+                       FROM artifact
+                       WHERE museum LIKE %s
+                       GROUP BY museum, location
+                       LIMIT %s""",
+                    (f"%{entity}%", limit)
+                )
+                return await cur.fetchall()
+
+    @classmethod
+    async def get_similar_artifacts(
+        cls, artifact_type: str, material: str, dynasty: str,
+        exclude_object_id: str, limit: int = 10
+    ) -> list:
+        pool = await cls.get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    """SELECT object_id, title, type, material, dynasty,
+                              museum, location, detail_url, image_url, accession_number,
+                              CASE
+                                WHEN type = %s AND material LIKE %s THEN '类型+材质相同'
+                                WHEN type = %s AND dynasty LIKE %s THEN '类型+朝代相同'
+                                ELSE '类型相同'
+                              END AS match_reason
+                       FROM artifact
+                       WHERE object_id != %s AND type = %s
+                       ORDER BY
+                         CASE
+                           WHEN type = %s AND material LIKE %s THEN 1
+                           WHEN type = %s AND dynasty LIKE %s THEN 2
+                           ELSE 3
+                         END
+                       LIMIT %s""",
+                    (
+                        artifact_type, f"%{material}%",
+                        artifact_type, f"%{dynasty}%",
+                        exclude_object_id, artifact_type,
+                        artifact_type, f"%{material}%",
+                        artifact_type, f"%{dynasty}%",
+                        limit,
+                    )
+                )
+                return await cur.fetchall()
