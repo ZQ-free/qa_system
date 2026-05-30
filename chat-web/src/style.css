@@ -1,0 +1,175 @@
+/* =============================================
+   Global CSS — CSS Variables + Reset + Markdown
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f4f4f5;
+  --color-border: #e4e4e7;
+  --color-text: #18181b;
+  --color-text-muted: #71717a;
+  --color-text-subtle: #a1a1aa;
+  --color-accent: #059669;
+  --color-accent-light: #d1fae5;
+  --color-accent-hover: #10b981;
+  --color-user-bg: #18181b;
+  --color-sidebar-bg: #fafafa;
+  --shadow-input: 0 2px 20px rgba(0, 0, 0, 0.06);
+  --radius-input: 20px;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Geist Mono', SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #d4d4d8; }
+
+/* Selection */
+::selection { background: var(--color-accent-light); color: #065f46; }
+
+/* Focus */
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* Button reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* =============================================
+   Markdown Body
+   ============================================= */
+.md-body {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #3f3f46;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.md-body p { line-height: 1.75; margin-bottom: 10px; }
+.md-body p:last-child { margin-bottom: 0; }
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  font-weight: 600;
+  color: #27272a;
+  line-height: 1.4;
+  margin: 16px 0 6px;
+}
+.md-body h1 { font-size: 18px; }
+.md-body h2 { font-size: 16px; }
+.md-body h3 { font-size: 15px; }
+.md-body strong { font-weight: 600; color: #27272a; }
+.md-body em { font-style: italic; color: #52525b; }
+.md-body a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+.md-body a:hover { color: var(--color-accent-hover); }
+.md-body code {
+  background: #f4f4f5;
+  color: var(--color-accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.875em;
+  font-family: var(--font-mono);
+}
+.md-body pre {
+  background: #fafafa;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+.md-body pre code {
+  background: none;
+  color: #3f3f46;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 0;
+}
+.md-body ul,
+.md-body ol {
+  padding-left: 22px;
+  margin: 6px 0;
+}
+.md-body li { margin: 3px 0; line-height: 1.75; }
+.md-body blockquote {
+  border-left: 2px solid var(--color-accent-hover);
+  padding: 2px 0 2px 14px;
+  color: #71717a;
+  font-style: italic;
+  margin: 8px 0;
+}
+.md-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+.md-body th {
+  background: #fafafa;
+  font-weight: 600;
+  text-align: left;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: #27272a;
+}
+.md-body td { padding: 7px 12px; border-bottom: 1px solid #f4f4f5; }
+.md-body tr:last-child td { border-bottom: none; }
+
+/* Streaming cursor */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--color-accent);
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: blink-cursor 0.8s ease-in-out infinite;
+  margin-left: 1px;
+}
+
+/* Fade in */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }

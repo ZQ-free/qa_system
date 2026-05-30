@@ -1,28 +1,60 @@
 """
 app/retrieval/llm_generator.py — 大语言模型调用模块
-【负责人：成员C】
 
-职责：
-  1. 封装大模型 API 调用（通义千问 / 智谱GLM / OpenAI 可切换）
-  2. 提供两个对外接口：
-     - simple_chat()：供 IntentParser 做意图识别
-     - generate_answer()：供 AnswerBuilder 润色最终答案
-  3. 严格限制 LLM 的行为：只能润色语言，不能添加图谱中没有的事实
-
-对应课设要求：
-  "将检索结果作为上下文传入大语言模型，生成自然流畅的回答"
-  "对于由大语言模型生成的补充性描述，须与知识图谱事实性内容明确区分标注"
-  "有效避免大模型幻觉问题"
+使用 LangChain ChatOpenAI 对接 OpenAI 兼容协议。
+支持任何兼容 OpenAI 协议的模型服务（DeepSeek、通义千问、Ollama、vLLM 等），
+只需在 .env 中配置 base_url、api_key、model_name 即可切换。
 """
 
-import asyncio
-import requests
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+
 from config import settings
-from app.core.intent_types import Intent
 
 
-# ── 回答生成的 System Prompt ─────────────────────────────────────────────
-# 关键约束：只能基于给定事实回答，不能凭空添加内容
+def create_llm(
+    temperature: float = None,
+    max_tokens: int = None,
+) -> ChatOpenAI:
+    """
+    创建 LLM 实例（统一工厂方法）。
+    所有模块通过此函数获取 LLM，保持配置一致。
+    """
+    return ChatOpenAI(
+        base_url=settings.LLM_BASE_URL,
+        api_key=settings.LLM_API_KEY,
+        model_name=settings.LLM_MODEL_NAME,
+        temperature=temperature if temperature is not None else settings.LLM_TEMPERATURE,
+        max_tokens=max_tokens or settings.LLM_MAX_TOKENS,
+        timeout=settings.LLM_TIMEOUT,
+        max_retries=settings.LLM_MAX_RETRIES,
+    )
+
+
+# ── 意图识别 Prompt ─────────────────────────────────────────────
+INTENT_SYSTEM_PROMPT = """你是一个文物知识问答系统的意图识别模块。
+你的任务是分析用户的问题，判断它属于以下哪个类别，并只返回对应的JSON。
+
+意图类别说明：
+- artifact_location：问文物现在藏在哪个博物馆
+- artifact_period：问文物的历史年代或朝代
+- artifact_material：问文物的制作材料
+- artifact_type：问文物的器物类型分类
+- artifact_introduction：请求介绍某件文物的综合信息
+- artifact_author：问书画作品的作者
+- author_biography：问作者的生平经历
+- author_other_works：问某作者还有哪些其他藏品
+- dynasty_artifacts：问某朝代有哪些文物
+- artifact_dimensions：问文物的尺寸、重量、规格
+- artifact_recommend：请求推荐风格或主题相似的文物
+- unknown：无法归入以上任何类别
+
+只返回如下格式的JSON，不要有任何其他文字：
+{"intent": "意图标签", "entity": "问题中的核心实体名称（文物名/作者名/朝代名）"}
+
+如果无法提取实体，entity填空字符串。"""
+
+# ── 回答生成 Prompt ─────────────────────────────────────────────
 ANSWER_SYSTEM_PROMPT = """你是一个专业的中国文物知识问答助手。
 
 你的任务是：根据【知识图谱提供的事实数据】，用流畅自然的中文回答用户的问题。
@@ -39,76 +71,27 @@ ANSWER_SYSTEM_PROMPT = """你是一个专业的中国文物知识问答助手。
 
 class LLMGenerator:
     """
-    大语言模型生成器（HTTP直连通义千问）
+    大语言模型生成器（LangChain ChatOpenAI 版本）。
+    通过 OpenAI 兼容协议对接任意模型服务。
     """
 
     def __init__(self):
-        self.provider = settings.LLM_PROVIDER
-        self.api_key = settings.LLM_API_KEY
-        self.model = settings.LLM_MODEL_NAME or "qwen-turbo"
-        self.url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
-
-    def _call_sync(self, system_prompt: str, user_message: str) -> str:
-        """
-        同步调用通义千问 API（内部方法）
-        """
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-
-        data = {
-            "model": self.model,
-            "input": {"messages": messages},
-            "parameters": {"result_format": "message"}
-        }
-
-        try:
-            response = requests.post(self.url, headers=headers, json=data, timeout=30)
-
-            if response.status_code == 200:
-                result = response.json()
-                return result["output"]["choices"][0]["message"]["content"]
-            else:
-                print(f"[LLM API错误] 状态码: {response.status_code}")
-                print(f"[LLM API错误] 响应: {response.text}")
-                return "抱歉，服务暂时不可用，请稍后再试。"
-
-        except requests.exceptions.Timeout:
-            print("[LLM API错误] 请求超时")
-            return "抱歉，服务响应超时，请稍后再试。"
-        except Exception as e:
-            print(f"[LLM API错误] {e}")
-            return "抱歉，服务出现异常，请稍后再试。"
+        self.llm = create_llm()
 
     async def simple_chat(self, system_prompt: str, user_message: str) -> str:
         """
         简单的单轮对话接口，供 IntentParser 调用做意图识别。
-
-        输入：system_prompt（任务说明）+ user_message（用户问题）
-        输出：模型的文本回复
         """
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None,
-            self._call_sync,
-            system_prompt,
-            user_message
-        )
-        return result
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_message),
+        ]
+        response = await self.llm.ainvoke(messages)
+        return response.content
 
     async def generate_answer(self, question: str, facts: str, intent: str) -> str:
         """
         根据图谱事实生成最终自然语言回答，供 AnswerBuilder 调用。
-
-        facts: 图谱查询结果格式化后的文本，作为 LLM 的上下文
-
-        关键：LLM 只能基于 facts 中的内容回答，框架通过 Prompt 约束这一点。
         """
         user_message = f"""用户问题：{question}
 
@@ -117,4 +100,9 @@ class LLMGenerator:
 
 请基于以上事实数据回答用户的问题。"""
 
-        return await self.simple_chat(ANSWER_SYSTEM_PROMPT, user_message)
+        messages = [
+            SystemMessage(content=ANSWER_SYSTEM_PROMPT),
+            HumanMessage(content=user_message),
+        ]
+        response = await self.llm.ainvoke(messages)
+        return response.content

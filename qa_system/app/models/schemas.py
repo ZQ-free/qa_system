@@ -10,29 +10,29 @@ from typing import Optional
 
 class Artifact(BaseModel):
     """
-    严格对应 MySQL artifact 表的完整字段（31列）。
-    字段名与建表语句保持一致，方便 ORM 映射与 CSV 导入。
+    严格对应 MySQL artifact 表的完整字段（35列）。
+    字段名与建表语句保持一致。
 
     主键说明：
-      数据库联合主键为 (museum_id, object_id)，
+      数据库联合主键为 (object_id, museum_id)，
       museum_id: 1=史密森尼  2=哈佛  3=波士顿MFA（依团组实际分配调整）
 
     字段分组：
-      - 文物基础信息：object_id / museum_id / title / type / material / culture
+      - 文物基础信息：object_id / artifact_id / museum_id / title / type / material / culture
       - 时间信息：dynasty / period / period_start_year / period_end_year
       - 作者信息：artist / artist_province / artist_wikidata_id /
                   artist_birth / artist_death / artist_bio /
                   artist_wikipedia_summary / artist_enriched_at
       - 详细描述：description / provenance / bibliography / dimensions
       - 馆藏信息：museum / location / accession_number / credit_line
-      - URL与路径：detail_url / image_url / iiif_manifest_url / image_path
+      - URL与路径：detail_url / image_url / image_urls / iiif_manifest_url / image_path / image_paths
+      - 图片元数据：image_count
       - 爬取元数据：crawl_date
-
-    所有字段除联合主键外均为 Optional，因为爬取数据存在缺失。
     """
 
     # ── 联合主键 ──────────────────────────────────────────────────
     object_id: str                              # 文物唯一编号（馆方/EDAN）
+    artifact_id: Optional[str] = None           # 文物内部编号
     museum_id: int                              # 馆别编号（联合主键，不可缺失）
 
     # ── 文物基础信息 ──────────────────────────────────────────────
@@ -74,6 +74,9 @@ class Artifact(BaseModel):
     image_url: Optional[str] = None             # 图片原始下载链接（原图，非缩略图）
     iiif_manifest_url: Optional[str] = None     # IIIF manifest URL（哈佛特有）
     image_path: Optional[str] = None            # 本地相对图片路径
+    image_urls: Optional[str] = None            # 多图片URL（JSON数组）
+    image_paths: Optional[str] = None           # 多图片本地路径（JSON数组）
+    image_count: int = 0                        # 图片数量
 
     # ── 爬取元数据 ────────────────────────────────────────────────
     crawl_date: Optional[str] = None            # 爬取日期，格式 YYYY-MM-DD

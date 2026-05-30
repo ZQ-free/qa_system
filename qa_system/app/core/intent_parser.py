@@ -16,31 +16,7 @@ app/core/intent_parser.py — 意图识别模块
 
 import json
 from app.core.intent_types import Intent
-
-
-# ── Prompt 模板 ────────────────────────────────────────────────────────────
-# 告诉LLM它的任务：从10个标签中选一个，只返回JSON，不要多余的话。
-# 这种方式比规则匹配更灵活，能处理各种自然语言表达方式。
-INTENT_SYSTEM_PROMPT = """你是一个文物知识问答系统的意图识别模块。
-你的任务是分析用户的问题，判断它属于以下哪个类别，并只返回对应的JSON。
-
-意图类别说明：
-- artifact_location：问文物现在藏在哪个博物馆（例：这件文物在哪里？现藏于何处？）
-- artifact_period：问文物的历史年代或朝代（例：这件文物是什么时期的？属于哪个朝代？）
-- artifact_material：问文物的制作材料（例：这件文物是什么材质的？用什么做的？）
-- artifact_type：问文物的器物类型分类（例：这件文物属于什么类型？是什么器物？）
-- artifact_introduction：请求介绍某件文物的综合信息（例：介绍一下这件文物、这件文物是什么）
-- artifact_author：问书画作品的作者（例：这幅画是谁画的？作者是谁？）
-- author_biography：问作者的生平经历（例：这位艺术家的生平、某某人是谁）
-- author_other_works：问某作者还有哪些其他藏品（例：他还有什么作品？同一作者的其他文物）
-- dynasty_artifacts：问某朝代有哪些文物（例：唐代有哪些文物？宋朝的代表文物）
-- artifact_dimensions：问文物的尺寸、重量、规格（例：这件文物有多大？重量是多少？）
-- unknown：无法归入以上任何类别
-
-只返回如下格式的JSON，不要有任何其他文字：
-{"intent": "意图标签", "entity": "问题中的核心实体名称（文物名/作者名/朝代名）"}
-
-如果无法提取实体，entity填空字符串。"""
+from app.retrieval.llm_generator import INTENT_SYSTEM_PROMPT
 
 
 class IntentParser:
@@ -77,24 +53,33 @@ class IntentParser:
 
     async def _parse_by_llm(self, question: str) -> dict:
         """
-        需要实现用LLM识别意图。
+        用 LLM 识别意图。
         
         调用 self.llm_client.simple_chat() 发送 INTENT_SYSTEM_PROMPT + 用户问题，
         解析返回的JSON，提取 intent 和 entity 字段。
         
-        注意：LLM可能返回不合法的意图标签，需要校验后降级到UNKNOWN。
+        LLM 解析失败时自动降级到规则版识别。
         """
-        # TODO:
-        # 示例调用（等成员C的LLMGenerator完成后接入）：
-        # response = await self.llm_client.simple_chat(
-        #     system_prompt=INTENT_SYSTEM_PROMPT,
-        #     user_message=question
-        # )
-        # result = json.loads(response)
-        # if result["intent"] not in Intent.all_known():
-        #     result["intent"] = Intent.UNKNOWN
-        # return result
-        raise NotImplementedError("成员A：请实现LLM意图识别")
+        try:
+            response = await self.llm_client.simple_chat(
+                system_prompt=INTENT_SYSTEM_PROMPT,
+                user_message=question,
+            )
+            response = response.strip()
+            if response.startswith("```"):
+                response = response.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+            result = json.loads(response)
+
+            if result.get("intent") not in Intent.all_known():
+                result["intent"] = Intent.UNKNOWN
+            if "entity" not in result:
+                result["entity"] = ""
+
+            return result
+        except (json.JSONDecodeError, KeyError, Exception) as e:
+            print(f"[IntentParser LLM错误] {e}，降级到规则识别")
+            return self._parse_by_rules(question)
 
     def _parse_by_rules(self, question: str) -> dict:
         """
